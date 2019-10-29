@@ -1,0 +1,3 @@
+[submodule "pyAPDLWrapper"]
+	path = pyAPDLWrapper
+	url = git://github.com/a-vodka/pyAPDLWrapper.git
