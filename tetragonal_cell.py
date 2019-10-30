@@ -30,11 +30,10 @@ def main(ex, ey):
 
     # print("Emix = {0:G}, Emix2 = {1:G},".format(E_mix, E_mix2))
     print("yield_mix = {0:G}, yield_mix2 = {1:G},".format(yield_mix, yield_mix2))
-    exit()
 
     projdir = r'd:\ans_proj\compo_yield_stress'
 
-    ans = ansyswrapper(projdir=projdir, jobname='myjob')
+    ans = ansyswrapper(projdir=projdir, jobname='myjob', anslic='aa_r')
     ans.setFEByNum(183)
 
     matrix_id = ans.createIsotropicMat(E=e_matrix, nu=nu_matirx)
@@ -57,7 +56,8 @@ def main(ex, ey):
     ans.saveMaxStressForEachMaterial()
     ans.saveToFile(projdir + '\\test.apdl')
     retcode = ans.run()
-    if (not retcode):
+
+    if (retcode > 0):
         print('retcode = {0}'.format(retcode))
         exit(retcode)
 
