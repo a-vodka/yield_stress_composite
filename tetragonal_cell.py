@@ -36,15 +36,19 @@ def main(ex, ey, filename):
     ans = ansyswrapper(projdir=projdir, jobname='myjob', anslic='aa_t_i', )
     ans.setFEByNum(183)
 
-    e_matrix_rnd = np.random.normal(1, 0.2, 1)[0] * e_matrix
-    e_fiber_rnd = np.random.normal(1, 0.2, 1)[0] * e_fiber
+    e_matrix_rnd = np.random.normal(1, 0.1, 1)[0] * e_matrix
+    e_fiber_rnd = np.random.normal(1, 0.0, 1)[0] * e_fiber
     print('e_matrix_rnd = {0}'.format(e_matrix_rnd))
 
     matrix_id = ans.createIsotropicMat(E=e_matrix_rnd, nu=nu_matirx)
     fiber_id = ans.createIsotropicMat(E=e_fiber_rnd, nu=nu_fiber)
 
     ans.rectangle(0, 0, cell_width, cell_height)
-    ans.circle(0, 0, fiber_radius)
+    # ans.circle(0, 0, fiber_radius)
+    r1 = np.random.normal(1, 0.1, 1)[0] * fiber_radius
+    r2 = fiber_radius ** 2 / r1
+
+    ans.ellipse(0, 0, r1=r1, r2=r2)
     ans.overlapAreas()
     ans.delOuterArea(0, 0, cell_width, cell_height)
     ans.setCirlceAreaMatProps(fiber_radius, matId=fiber_id)
@@ -59,6 +63,7 @@ def main(ex, ey, filename):
     ans.applyTensXandY(0, 0, cell_width, cell_height, epsx=ex, epsy=ey)
     ans.saveMaxStressForEachMaterial()
     ans.saveToFile(projdir + '\\test.apdl')
+
     retcode = ans.run()
 
     if (retcode > 0):
@@ -87,11 +92,12 @@ ex = np.linspace(-0.1, 0.1, 4, endpoint=True)
 ey = np.linspace(-0.1, 0.1, 4, endpoint=True)
 
 xv, yv = np.meshgrid(ex, ey, sparse=False, indexing='ij')
-for i in range(10):
-    for j in range(10):
-        #print(np.random.uniform(-0.1, 0.1, 1)[0], np.random.uniform(-0.1, 0.1, 1)[0])
+for i in range(ex.size):
+    for j in range(ey.size):
+        # print(np.random.uniform(-0.1, 0.1, 1)[0], np.random.uniform(-0.1, 0.1, 1)[0])
         for k in range(5):
-            main(np.random.uniform(-0.1, 0.1, 1)[0], np.random.uniform(-0.1, 0.1, 1)[0], filename=outfile)
+            # main(np.random.uniform(-0.1, 0.1, 1)[0], np.random.uniform(-0.1, 0.1, 1)[0], filename=outfile)
+            main(xv[i, j], yv[i, j], filename=outfile)
 
 res = np.loadtxt(outfile, delimiter=';', usecols=(0, 1))
 print(res)

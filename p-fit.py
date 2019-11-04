@@ -62,7 +62,7 @@ def plotConts(contour_list):
     plt.show(block=False)
 
 
-outfile = "./yield_surface.csv"
+outfile = "./yield_surface_mat+fib.csv"
 
 res = np.loadtxt(outfile, delimiter=';', usecols=(0, 1))
 print(res)
