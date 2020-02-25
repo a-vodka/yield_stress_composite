@@ -18,7 +18,7 @@ g_matrix = 1500e6
 yield_matrix = 80e6
 
 
-def main(ex, ey, filename):
+def main(filename):
     psi = np.pi * fiber_radius ** 2 / cell_width / cell_height / 4.0
     # print("psi = {0}".format(psi))
 
@@ -60,44 +60,52 @@ def main(ex, ey, filename):
     # ans.applyShearXY(0, 0, cell_width, cell_height, eps=ex)
     # ans.precessElasticConstants()
 
-    ans.applyTensXandY(0, 0, cell_width, cell_height, epsx=ex, epsy=ey)
+    phi = np.linspace(0, 2*np.pi, 100, dtype=np.float)
+
+    rho = 1e-4
+    ex = rho * np.cos(phi)
+    ey = rho * np.sin(phi)
+
+    for i in range(phi.size):
+        ans.applyLoadStep(0, 0, cell_width, cell_height, epsx=ex[i], epsy=ey[i])
+
+    ans.solveAllLs()
+    ans.post()
+
+    #ans.applyTensXandY(0, 0, cell_width, cell_height, epsx=ex, epsy=ey)
     ans.saveMaxStressForEachMaterial()
     ans.saveToFile(projdir + '\\test.apdl')
 
     retcode = ans.run()
-
-    if (retcode > 0):
+    #retcode = 0
+    if retcode > 0:
         print('retcode = {0}'.format(retcode))
         exit(retcode)
 
-    s, e = ans.getAVGStressAndStrains()
-    s_principals, _ = LA.eig(s)
 
-    maxs = ans.getMaxStressForEachMaterial() / np.array([yield_matrix, yield_fiber])
+    for i in range(phi.size):
+        s, e = ans.getAVGStressAndStrains(i)
+        s_principals, _ = LA.eig(s)
 
-    # print(maxs)
-    yield_stress = s_principals / np.min(maxs)
+        max_stress = ans.getMaxStressForEachMaterial(i)
 
-    print(yield_stress)
+        maxs = np.max([np.abs(max_stress[:, 0]),np.abs(max_stress[:, 2])]) / np.array([yield_matrix, yield_fiber])
 
-    out_file = open(filename, mode='a')
-    np.savetxt(out_file, np.reshape(yield_stress, (1, 3)), delimiter=';', newline='\n')
-    out_file.close()
+        yield_stress = s_principals / np.min(maxs)
+
+        print(yield_stress)
+
+        out_file = open(filename, mode='a')
+        np.savetxt(out_file, np.reshape(yield_stress, (1, 3)), delimiter=';', newline='\n')
+        out_file.close()
 
     pass
 
 
 outfile = "./yield_surface.csv"
-ex = np.linspace(-0.1, 0.1, 4, endpoint=True)
-ey = np.linspace(-0.1, 0.1, 4, endpoint=True)
-
-xv, yv = np.meshgrid(ex, ey, sparse=False, indexing='ij')
-for i in range(ex.size):
-    for j in range(ey.size):
-        # print(np.random.uniform(-0.1, 0.1, 1)[0], np.random.uniform(-0.1, 0.1, 1)[0])
-        for k in range(5):
-            # main(np.random.uniform(-0.1, 0.1, 1)[0], np.random.uniform(-0.1, 0.1, 1)[0], filename=outfile)
-            main(xv[i, j], yv[i, j], filename=outfile)
+for k in range(5):
+    # main(np.random.uniform(-0.1, 0.1, 1)[0], np.random.uniform(-0.1, 0.1, 1)[0], filename=outfile)
+    main(filename=outfile)
 
 res = np.loadtxt(outfile, delimiter=';', usecols=(0, 1))
 print(res)
