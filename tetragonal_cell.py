@@ -18,6 +18,12 @@ g_matrix = 1500e6
 yield_matrix = 80e6
 
 
+def get_principals(tensor):
+    s_principals, e_vectors = np.linalg.eig(tensor)
+    a_max = np.argmax(np.abs(e_vectors), axis=1)
+    s_principals = s_principals[a_max]
+    return s_principals
+
 def main(filename):
     psi = np.pi * fiber_radius ** 2 / cell_width / cell_height / 4.0
     # print("psi = {0}".format(psi))
@@ -86,7 +92,8 @@ def main(filename):
 
     for i in range(phi.size):
         s, e = ans.getAVGStressAndStrains(i)
-        s_principals, _ = LA.eig(s)
+        s_principals = get_principals(s)
+        e_principals = get_principals(e)
 
         max_stress = ans.getMaxStressForEachMaterial(i)
 
