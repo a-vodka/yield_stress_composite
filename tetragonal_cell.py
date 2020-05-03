@@ -31,9 +31,10 @@ def main(filename):
     # print("Emix = {0:G}, Emix2 = {1:G},".format(E_mix, E_mix2))
     # print("yield_mix = {0:G}, yield_mix2 = {1:G},".format(yield_mix, yield_mix2))
 
-    projdir = r'd:\ans_proj\compo_yield_stress'
+    projdir = r'../ans_temp_dir'
+    path_to_ans_bin = "/usr/ansys_inc/v201/ansys/bin/ansys201"
 
-    ans = ansyswrapper(projdir=projdir, jobname='myjob', anslic='aa_t_i', )
+    ans = ansyswrapper(projdir=projdir, jobname='myjob', anslic='aa_t_i', path_to_and_bin=path_to_ans_bin)
     ans.setFEByNum(183)
 
     e_matrix_rnd = np.random.normal(1, 0.1, 1)[0] * e_matrix
