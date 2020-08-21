@@ -35,7 +35,7 @@ def create_hexagonal_cell(ans, width, height):
     tot_area = width * height
     s_matrix = tot_area - s_fiber
     psi = s_fiber / tot_area
-    print("psi = {0}".format(psi))
+    print("fiber_radius = {0}\npsi = {1}".format(fiber_radius, psi))
 
     E_mix = e_fiber * psi + e_matrix * (1 - psi)
     E_mix2 = (psi / e_fiber + (1 - psi) / e_matrix) ** -1
@@ -67,7 +67,7 @@ def create_tetragonal_cell(ans, width, height):
     tot_area = width * height
     s_matrix = tot_area - s_fiber
     psi = s_fiber / tot_area
-    print("psi = {0}".format(psi))
+    print("fiber_radius = {0}\npsi = {1}".format(fiber_radius, psi))
 
     E_mix = e_fiber * psi + e_matrix * (1 - psi)
     E_mix2 = (psi / e_fiber + (1 - psi) / e_matrix) ** -1
@@ -115,7 +115,8 @@ def main(filename, fz):
     path_to_ans_bin = "/usr/ansys_inc/v201/ansys/bin/ansys201"
 
     ans = ansyswrapper(projdir=projdir, jobname='myjob', anslic='aa_t_i', path_to_and_bin=path_to_ans_bin,
-                       isBatch=True)
+                       isBatch=True
+                       )
     ans.setFEByNum(183)
 
     e_matrix_rnd = np.random.normal(1, 0.05, 1)[0] * e_matrix
@@ -132,11 +133,11 @@ def main(filename, fz):
     ans.add_kxx_by_mat_id(mat_id=matrix_id, kxx=g_matrix_rnd)
     ans.add_kxx_by_mat_id(mat_id=fiber_id, kxx=g_fiber)
 
-    # cell_width, cell_height = create_tetragonal_cell(ans, width=1.0, height=1.0)
-    cell_width, cell_height = create_hexagonal_cell(ans, width=1, height=np.sqrt(3))
+    cell_width, cell_height = create_tetragonal_cell(ans, width=1.0, height=1.0)
+    # cell_width, cell_height = create_hexagonal_cell(ans, width=1, height=np.sqrt(3))
 
     ans.setCirlceAreaMatProps(x=0, y=0, rad=fiber_radius, matId=fiber_id)
-    ans.setCirlceAreaMatProps(x=cell_width, y=cell_height, rad=fiber_radius, matId=fiber_id)
+    #ans.setCirlceAreaMatProps(x=cell_width, y=cell_height, rad=fiber_radius, matId=fiber_id)
 
     ans.mesh(smartsize=1)
 
@@ -298,17 +299,16 @@ def main(filename, fz):
 
     save_array = np.array([Ex, Ey, Ez, NUxy, NUxz, NUyz, Gyz, Gzx, Gxy])
     out_file1 = open(
-        os.path.dirname(os.path.realpath(__file__)) + "/stress_out/elastic_modules_{0}.csv".format(fiber_radius),
+        os.path.dirname(os.path.realpath(__file__)) + "/stress_out_tet/elastic_modules_{0}.csv".format(fiber_radius),
         mode='a')
     np.savetxt(out_file1, np.reshape(save_array, [1, save_array.size]), delimiter=';', newline='\n')
     out_file1.close()
 
     out_file2 = open(
-        os.path.dirname(os.path.realpath(__file__)) + "/stress_out/principals_modules_{0}.csv".format(fiber_radius),
+        os.path.dirname(os.path.realpath(__file__)) + "/stress_out_tet/principals_modules_{0}.csv".format(fiber_radius),
         mode='a')
     np.savetxt(out_file2, np.reshape(C_princ, [1, C_princ.size]), delimiter=';', newline='\n')
     out_file2.close()
-
     return
     ans.run()
 
@@ -377,7 +377,10 @@ def plot_files():
 
 
 def elastic_main():
-    rad = np.linspace(0.1, 0.9, 9, endpoint=True)+0.05
+    rad = np.linspace(0.1, 0.95, 18, endpoint=True)
+    rad = rad[10:]
+    print(rad)
+    #exit()
     for r in rad:
         global fiber_radius
         fiber_radius = r

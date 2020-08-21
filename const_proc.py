@@ -80,16 +80,13 @@ def pdf_fit(y_std):
         'gamma',
         'lognorm',
         'norm',
-        'pearson3',
-        'triang',
-        'uniform',
-        'rayleigh',
-        'pareto',
         'genextreme',
-        'laplace',
-        'logistic',
         'loggamma',
-        'loglaplace'
+        'loglaplace',
+        'gennorm',
+        'exponnorm',
+        #        'exponweib',
+
     ]
 
     # dist_names = ['alpha', 'anglit', 'arcsine', 'beta', 'betaprime', 'bradford', 'burr', 'cauchy', 'chi', 'chi2',
@@ -103,9 +100,26 @@ def pdf_fit(y_std):
     #               'rice', 'recipinvgauss', 'semicircular', 't', 'triang', 'truncexpon', 'truncnorm', 'tukeylambda',
     #               'uniform', 'vonmises', 'wald', 'weibull_min', 'weibull_max', 'wrapcauchy']
 
+    # dist_names = [
+    #     "alpha", "anglit", "arcsine", "beta", "betaprime", "bradford", "burr", 'cauchy', 'chi', 'chi2',
+    #     'cosine', 'dgamma', 'dweibull', 'erlang', 'expon', 'exponnorm', 'exponweib', 'exponpow', 'f', 'fatiguelife',
+    #     'fisk', 'foldcauchy', 'foldnorm', 'frechet_r', 'frechet_l', 'genlogistic', 'genpareto', 'gennorm', 'genexpon',
+    #     'genextreme', 'gausshyper', 'gamma', 'gengamma', 'genhalflogistic', 'gilbrat', 'gompertz', 'gumbel_r',
+    #     'gumbel_l', 'halfcauchy', 'halflogistic', 'halfnorm', 'halfgennorm', 'hypsecant', 'invgamma',
+    #     'invgauss', 'invweibull', 'johnsonsb', 'johnsonsu', 'ksone', 'kstwobign', 'laplace', 'levy', 'levy_l',
+    #     'logistic', 'loggamma', 'loglaplace', 'lognorm', 'lomax', 'maxwell', 'mielke', 'nakagami',
+    #     'ncx2', 'ncf', 'nct', 'norm', 'pareto', 'pearson3', 'powerlaw', 'powerlognorm', 'powernorm', 'rdist',
+    #     'reciprocal', 'rayleigh', 'rice', 'recipinvgauss', 'semicircular', 't', 'triang', 'truncexpon', 'truncnorm',
+    #     'tukeylambda', 'uniform', 'vonmises', 'vonmises_line', 'wald', 'weibull_min', 'weibull_max', 'wrapcauchy'
+    # ]
+
+    dist_names = ['lognorm', 'exponnorm', 'norm']
+
     # Set up empty lists to stroe results
     chi_square = []
     p_values = []
+
+    m1, m2, m3 = [], [], []
 
     # Set up 50 bins for chi-square test
     # Observed data will be approximately evenly distrubuted aross all bins
@@ -117,9 +131,17 @@ def pdf_fit(y_std):
     # Loop through candidate distributions
 
     for distribution in dist_names:
+        # print(distribution)
         # Set up distribution and get fitted distribution parameters
         dist = getattr(scipy.stats, distribution)
         param = dist.fit(y_std)
+
+        m1.append(param[0])
+        m2.append(param[1])
+        if len(param) == 3:
+            m3.append(param[2])
+        else:
+            m3.append(0)
 
         # Obtain the KS test P statistic, round it to 5 decimal places
         p = scipy.stats.kstest(y_std, distribution, args=param)[1]
@@ -146,7 +168,11 @@ def pdf_fit(y_std):
     results['Distribution'] = dist_names
     results['chi_square'] = chi_square
     results['p_value'] = p_values
-    results.sort_values(['chi_square'], inplace=True)
+    results['m1'] = m1
+    results['m2'] = m2
+    results['m3'] = m3
+
+    # results.sort_values(['chi_square'], inplace=True)
 
     results = results[results['p_value'] > 0.01]
 
@@ -172,7 +198,7 @@ Gxy_q = np.zeros([3, 18])
 
 
 def main(r, i):
-    fname = "./stress_out/elastic_modules_{0:.2f}.csv".format(r)
+    fname = "./stress_out_tet/elastic_modules_{0:.2f}.csv".format(r)
     if not os.path.exists(fname):
         return
     data = np.loadtxt(fname, delimiter=';', dtype=float, comments='#')
@@ -212,20 +238,21 @@ def main(r, i):
     # l5 = filter(data2[:, 4] / 1e9)
     # l6 = filter(data2[:, 5] / 1e9)
 
-    plot_hist(Ex, "E_x", units="GPa", filename="./stress_out_hist/ex_{0:.2f}.eps".format(r), pdf=pdf_fit(Ex)[0:3])
-    plot_hist(Ey, "E_y", units="GPa", filename="./stress_out_hist/ey_{0:.2f}.eps".format(r), pdf=pdf_fit(Ey)[0:3])
-    plot_hist(Ez, "E_z", units="GPa", filename="./stress_out_hist/ez_{0:.2f}.eps".format(r), pdf=pdf_fit(Ez)[0:3])
-
-    plot_hist(nuxy, "\\nu_{xy}", units="", filename="./stress_out_hist/nuxy_{0:.2f}.eps".format(r),
-              pdf=pdf_fit(nuxy)[0:3])
-    plot_hist(nuxz, "\\nu_{xz}", units="", filename="./stress_out_hist/nuxz_{0:.2f}.eps".format(r),
-              pdf=pdf_fit(nuxz)[0:3])
-    plot_hist(nuyz, "\\nu_{yz}", units="", filename="./stress_out_hist/nuyz_{0:.2f}.eps".format(r),
-              pdf=pdf_fit(nuyz)[0:3])
-
-    plot_hist(Gxy, "G_{xy}", units="GPa", filename="./stress_out_hist/gxy_{0:.2f}.eps".format(r), pdf=pdf_fit(Gxy)[0:3])
-    plot_hist(Gzx, "G_{zx}", units="GPa", filename="./stress_out_hist/gzx_{0:.2f}.eps".format(r), pdf=pdf_fit(Gzx)[0:3])
-    plot_hist(Gyz, "G_{yz}", units="GPa", filename="./stress_out_hist/gyz_{0:.2f}.eps".format(r), pdf=pdf_fit(Gyz)[0:3])
+    plot_hist(Ex, "E_z, r = {0:.2f}".format(r), units="GPa", filename=None, pdf=pdf_fit(Ez)[0:3])
+    # plot_hist(Ex, "E_x", units="GPa", filename="./stress_out_hist/ex_{0:.2f}.eps".format(r), pdf=pdf_fit(Ex)[0:3])
+    # plot_hist(Ey, "E_y", units="GPa", filename="./stress_out_hist/ey_{0:.2f}.eps".format(r), pdf=pdf_fit(Ey)[0:3])
+    # plot_hist(Ez, "E_z", units="GPa", filename="./stress_out_hist/ez_{0:.2f}.eps".format(r), pdf=pdf_fit(Ez)[0:3])
+    #
+    # plot_hist(nuxy, "\\nu_{xy}", units="", filename="./stress_out_hist/nuxy_{0:.2f}.eps".format(r),
+    #           pdf=pdf_fit(nuxy)[0:3])
+    # plot_hist(nuxz, "\\nu_{xz}", units="", filename="./stress_out_hist/nuxz_{0:.2f}.eps".format(r),
+    #           pdf=pdf_fit(nuxz)[0:3])
+    # plot_hist(nuyz, "\\nu_{yz}", units="", filename="./stress_out_hist/nuyz_{0:.2f}.eps".format(r),
+    #           pdf=pdf_fit(nuyz)[0:3])
+    #
+    # plot_hist(Gxy, "G_{xy}", units="GPa", filename="./stress_out_hist/gxy_{0:.2f}.eps".format(r), pdf=pdf_fit(Gxy)[0:3])
+    # plot_hist(Gzx, "G_{zx}", units="GPa", filename="./stress_out_hist/gzx_{0:.2f}.eps".format(r), pdf=pdf_fit(Gzx)[0:3])
+    # plot_hist(Gyz, "G_{yz}", units="GPa", filename="./stress_out_hist/gyz_{0:.2f}.eps".format(r), pdf=pdf_fit(Gyz)[0:3])
 
     # plot_hist(l1, "\lambda_{1}", units="GPa", filename="./stress_out_hist/l1.eps", pdf=scipy.stats.norm)
     # plot_hist(l2, "\lambda_{2}", units="GPa", filename="./stress_out_hist/l2.eps", pdf=scipy.stats.norm)
@@ -234,13 +261,14 @@ def main(r, i):
     # plot_hist(l5, "\lambda_{5}", units="GPa", filename="./stress_out_hist/l5.eps", pdf=scipy.stats.norm)
     # plot_hist(l6, "\lambda_{6}", units="GPa", filename="./stress_out_hist/l6.eps", pdf=scipy.stats.norm)
 
-    #plt.show()
+    # plt.show()
 
     pass
 
 
 if __name__ == "__main__":
     rad = np.linspace(0.1, 0.95, 18, endpoint=True)
+
     # rad = [0.9]
     for i in range(rad.size):
         main(rad[i], i)
